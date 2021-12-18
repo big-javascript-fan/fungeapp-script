@@ -1181,12 +1181,11 @@ window.addEventListener('load', async () => {
 async function mint() {
 	await onConnect();
 	if (provider) {
-		const addrs = await window.ethereum.request({ method: "eth_accounts" });
 		const web3 = new Web3(provider);
 		const nftContract = new web3.eth.Contract(ABI, "0x02015748Cb74d34036d64fbD369Ecb36810242fc");
 		const wlState = await nftContract.methods.ogSaleIsActive().call();
 		if (wlState) {
-			if(whitelist.findIndex(addrs[0]) > 0) {
+			if(whitelist.includes(selectedAccount)) {
 				if (x > 2) {
 					alert("Cannot mint more than 2 NFT at this stage!");
 				} else {
