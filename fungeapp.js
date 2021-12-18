@@ -1,3 +1,5 @@
+"use strict";
+
 const whitelist = ["0xFDc57389c9013aD8f82AD17C8F2A2B710D7A6CA4",
 "0xAcC3238A3bee01b19fC13538017a71f4333263fd",
 "0x4b963c5c3747b1d7c000445cD41431f983e2e46e",
@@ -1031,36 +1033,154 @@ $('.submit-button').click(function (event) {
 	mint();
 });
 
+/**
+ * Example JavaScript code that interacts with the page and Web3 wallets
+ */
+
+ // Unpkg imports
 const Web3Modal = window.Web3Modal.default;
 const WalletConnectProvider = window.WalletConnectProvider.default;
-const providerOptions = {
-	walletconnect: {
-		package: WalletConnectProvider,
-		options: {
-			infuraId: "a884776a9c0e4fdeb31b654651ed780d"
-		}
-	},
-};
 
-var web3Modal = new Web3Modal({
-	cacheProvider: false,
-	disableInjectedProvider: false,
-	providerOptions
-});
+// Web3modal instance
+let web3Modal
 
-var provider = null;
+// Chosen wallet provider given by the dialog window
+let provider;
 
-async function connectWallet() {
-	try {
-		provider = await web3Modal.connect();
-	} catch (e) {
-		console.log("Could not get a wallet connection", e);
-		return;
-	}
+
+// Address of the selected account
+let selectedAccount;
+
+
+/**
+ * Setup the orchestra
+ */
+function init() {
+
+  console.log("Initializing example");
+  console.log("WalletConnectProvider is", WalletConnectProvider);
+  console.log("Fortmatic is", Fortmatic);
+  console.log("window.web3 is", window.web3, "window.ethereum is", window.ethereum);
+
+  // Check that the web page is run in a secure context,
+  // as otherwise MetaMask won't be available
+  if(location.protocol !== 'https:') {
+    // https://ethereum.stackexchange.com/a/62217/620
+    return;
+  }
+
+  // Tell Web3modal what providers we have available.
+  // Built-in web browser provider (only one can exist as a time)
+  // like MetaMask, Brave or Opera is added automatically by Web3modal
+  const providerOptions = {
+    walletconnect: {
+      package: WalletConnectProvider,
+      options: {
+        // Mikko's test key - don't copy as your mileage may vary
+        infuraId: "8043bb2cf99347b1bfadfb233c5325c0",
+      }
+    }
+  };
+
+  web3Modal = new Web3Modal({
+    cacheProvider: false, // optional
+    providerOptions, // required
+    disableInjectedProvider: false, // optional. For MetaMask / Brave / Opera.
+  });
+
+  console.log("Web3Modal instance is", web3Modal);
 }
 
+
+/**
+ * Kick in the UI action after Web3modal dialog has chosen a provider
+ */
+async function fetchAccountData() {
+  const web3 = new Web3(provider);
+  // Get connected chain id from Ethereum node
+  const chainId = await web3.eth.getChainId();
+  // Get list of accounts of the connected wallet
+  const accounts = await web3.eth.getAccounts();
+  // MetaMask does not give you all accounts, only the selected account
+  console.log("Got accounts", accounts);
+  selectedAccount = accounts[0];
+}
+
+
+
+/**
+ * Fetch account data for UI when
+ * - User switches accounts in wallet
+ * - User switches networks in wallet
+ * - User connects wallet initially
+ */
+async function refreshAccountData() {
+  await fetchAccountData(provider);
+}
+
+
+/**
+ * Connect wallet button pressed.
+ */
+async function onConnect() {
+
+  console.log("Opening a dialog", web3Modal);
+  try {
+    provider = await web3Modal.connect();
+  } catch(e) {
+    console.log("Could not get a wallet connection", e);
+    return;
+  }
+
+  // Subscribe to accounts change
+  provider.on("accountsChanged", (accounts) => {
+    fetchAccountData();
+  });
+
+  // Subscribe to chainId change
+  provider.on("chainChanged", (chainId) => {
+    fetchAccountData();
+  });
+
+  // Subscribe to networkId change
+  provider.on("networkChanged", (networkId) => {
+    fetchAccountData();
+  });
+
+  await refreshAccountData();
+}
+
+/**
+ * Disconnect wallet button pressed.
+ */
+async function onDisconnect() {
+
+  console.log("Killing the wallet connection", provider);
+
+  // TODO: Which providers have close method?
+  if(provider.close) {
+    await provider.close();
+
+    // If the cached provider is not cleared,
+    // WalletConnect will default to the existing session
+    // and does not allow to re-scan the QR code with a new wallet.
+    // Depending on your use case you may want or want not his behavir.
+    await web3Modal.clearCachedProvider();
+    provider = null;
+  }
+
+  selectedAccount = null;
+}
+
+/**
+ * Main entry point.
+ */
+window.addEventListener('load', async () => {
+  init();
+});
+
 async function mint() {
-	await connectWallet();
+	await onConnect();
 	if (provider) {
 		const addrs = await window.ethereum.request({ method: "eth_accounts" });
 		const web3 = new Web3(provider);
@@ -1072,7 +1192,7 @@ async function mint() {
 					alert("Cannot mint more than 2 NFT at this stage!");
 				} else {
 					await nftContract.methods.mintTokenOgSale(x).send({
-						from: addrs[0],
+						from: selectedAccount,
 						value: web3.utils.toWei((0.08 * x).toString())
 					});
 				}
@@ -1084,7 +1204,7 @@ async function mint() {
 				alert("Cannot mint more than 5 NFT at this stage!");
 			} else {
 				await nftContract.methods.mintToken(x).send({
-					from: addrs[0],
+					from: selectedAccount,
 					value: web3.utils.toWei((0.08 * x).toString())
 				});
 			}
