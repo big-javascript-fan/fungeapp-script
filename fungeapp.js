@@ -1185,7 +1185,7 @@ async function mint() {
 	$('.error-msg').hide();
 	if (provider) {
 		const web3 = new Web3(provider);
-		const nftContract = new web3.eth.Contract(ABI, "0x02015748Cb74d34036d64fbD369Ecb36810242fc");
+		const nftContract = new web3.eth.Contract(ABI, "0x084310818c91aedd2465dac096e1029c95a64e7b");
 		const wlState = await nftContract.methods.ogSaleIsActive().call();
 		if(x <= 0) {
 			$('.error-msg').html("Need to mint more than 1 NFTs!");
