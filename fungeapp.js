@@ -1232,6 +1232,6 @@ async function mint() {
 			}
 		}
 	} else {
-		alert("Please connect metamask account");
+		await onConnect();
 	}
 }
