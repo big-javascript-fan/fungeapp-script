@@ -1176,16 +1176,22 @@ async function onDisconnect() {
  */
 window.addEventListener('load', async () => {
   init();
+  await onConnect();
 });
 
 async function mint() {
-	await onConnect();
 	$('.success-msg').hide();
 	$('.error-msg').hide();
 	if (provider) {
 		const web3 = new Web3(provider);
 		const nftContract = new web3.eth.Contract(ABI, "0x02015748Cb74d34036d64fbD369Ecb36810242fc");
 		const wlState = await nftContract.methods.ogSaleIsActive().call();
+		if(x <= 0) {
+			$('.error-msg').html("Need to mint more than 1 NFTs!");
+			$('.success-msg').hide();
+			$('.error-msg').show();
+			return;
+		}
 		if (wlState) {
 			if(whitelist.includes(selectedAccount)) {
 				if (x > 2) {
