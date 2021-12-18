@@ -1031,10 +1031,6 @@ $('.submit-button').click(function (event) {
 	mint();
 });
 
-$(document).ready(function () {
-	connectWallet();
-});
-
 const Web3Modal = window.Web3Modal.default;
 const WalletConnectProvider = window.WalletConnectProvider.default;
 const providerOptions = {
@@ -1064,6 +1060,7 @@ async function connectWallet() {
 }
 
 async function mint() {
+	await connectWallet();
 	if (provider) {
 		const addrs = await window.ethereum.request({ method: "eth_accounts" });
 		const web3 = new Web3(provider);
