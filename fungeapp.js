@@ -1180,6 +1180,8 @@ window.addEventListener('load', async () => {
 
 async function mint() {
 	await onConnect();
+	$('.success-msg').hide();
+	$('.error-msg').hide();
 	if (provider) {
 		const web3 = new Web3(provider);
 		const nftContract = new web3.eth.Contract(ABI, "0x02015748Cb74d34036d64fbD369Ecb36810242fc");
@@ -1187,7 +1189,9 @@ async function mint() {
 		if (wlState) {
 			if(whitelist.includes(selectedAccount)) {
 				if (x > 2) {
-					alert("Cannot mint more than 2 NFT at this stage!");
+					$('.error-msg').html("Cannot mint more than 2 NFT at this stage!");
+					$('.success-msg').hide();
+					$('.error-msg').show();
 				} else {
 					await nftContract.methods.mintTokenOgSale(x).send({
 						from: selectedAccount,
@@ -1195,16 +1199,30 @@ async function mint() {
 					});
 				}
 			} else {
-				alert("You are not whitelisted!");
+				$('.error-msg').html("You are not whitelisted!");
+				$('.success-msg').hide();
+				$('.error-msg').show();
 			}
 		} else {
 			if (x > 5) {
+				$('.error-msg').html("Cannot mint more than 5 NFT at this stage!");
+				$('.success-msg').hide();
+				$('.error-msg').show();
 				alert("Cannot mint more than 5 NFT at this stage!");
 			} else {
-				await nftContract.methods.mintToken(x).send({
-					from: selectedAccount,
-					value: web3.utils.toWei((0.08 * x).toString())
-				});
+				try {
+					await nftContract.methods.mintToken(x).send({
+						from: selectedAccount,
+						value: web3.utils.toWei((0.08 * x).toString())
+					});
+					$('.success-msg').show();
+					$('.error-msg').hide();
+				} catch(e) {
+					console.log('error from transaction', e);
+					$('.success-msg').hide();
+					$('.error-msg').html("Something went wrong, please check transaction details!");
+					$('.error-msg').show();
+				}
 			}
 		}
 	} else {
