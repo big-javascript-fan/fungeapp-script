@@ -1513,7 +1513,6 @@ async function mint() {
 				$('.error-msg').html("Cannot mint more than 5 NFT at this stage!");
 				$('.success-msg').hide();
 				$('.error-msg').show();
-				alert("Cannot mint more than 5 NFT at this stage!");
 			} else {
 				try {
 					await nftContract.methods.mintToken(x).send({
